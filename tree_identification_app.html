@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>樹木判定ナビゲーター</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+      color: white;
+      padding: 20px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    
+    .header p {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+    
+    .content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .tab-button {
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.3s;
+    }
+    
+    .tab-button.active {
+      color: #2ecc71;
+      border-bottom-color: #2ecc71;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .input-group {
+      margin-bottom: 12px;
+    }
+    
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .input-group input,
+    .input-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+    
+    .input-group input:focus,
+    .input-group textarea:focus {
+      outline: none;
+      border-color: #2ecc71;
+      box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+    }
+    
+    .input-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .button {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    
+    .button-primary {
+      background: #2ecc71;
+      color: white;
+    }
+    
+    .button-primary:hover {
+      background: #27ae60;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+    }
+    
+    .button-secondary {
+      background: #ecf0f1;
+      color: #333;
+      border: 1px solid #bdc3c7;
+    }
+    
+    .button-secondary:hover {
+      background: #d5dbdb;
+    }
+    
+    .question-card {
+      background: white;
+      border-left: 4px solid #2ecc71;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .question-text {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #2c3e50;
+    }
+    
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .option-button {
+      padding: 12px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    
+    .option-button:hover {
+      border-color: #2ecc71;
+      background: #f0fdf4;
+    }
+    
+    .option-button.selected {
+      background: #2ecc71;
+      color: white;
+      border-color: #27ae60;
+      font-weight: 600;
+    }
+    
+    .result-card {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcf8e3 100%);
+      border: 2px solid #2ecc71;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .result-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #27ae60;
+      margin-bottom: 8px;
+    }
+    
+    .result-details {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    
+    .tree-image {
+      width: 100%;
+      max-height: 200px;
+      border-radius: 6px;
+      object-fit: cover;
+      margin-top: 10px;
+    }
+    
+    .tree-list-item {
+      background: white;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    .tree-list-item-name {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
+    .tree-list-item-details {
+      font-size: 11px;
+      color: #999;
+      margin-top: 2px;
+    }
+    
+    .tree-actions {
+      display: flex;
+      gap: 6px;
+    }
+    
+    .tree-actions button {
+      padding: 6px 10px;
+      font-size: 11px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .tree-actions .edit {
+      background: #3498db;
+      color: white;
+    }
+    
+    .tree-actions .edit:hover {
+      background: #2980b9;
+    }
+    
+    .tree-actions .delete {
+      background: #e74c3c;
+      color: white;
+    }
+    
+    .tree-actions .delete:hover {
+      background: #c0392b;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+      background: white;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .breadcrumb {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 12px;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    
+    .nav-buttons button {
+      flex: 1;
+    }
+    
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 20px;
+      }
+      
+      .content {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🌳 樹木判定ナビゲーター</h1>
+      <p>質問に答えて樹種を特定 | 現地調査で活用</p>
+    </div>
+
+    <div class="content">
+      <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('judge')">判定</button>
+        <button class="tab-button" onclick="switchTab('manage')">管理</button>
+        <button class="tab-button" onclick="switchTab('library')">図書</button>
+      </div>
+
+      <!-- 判定タブ -->
+      <div id="judge-tab" class="tab-content active">
+        <div id="judge-content"></div>
+      </div>
+
+      <!-- 管理タブ -->
+      <div id="manage-tab" class="tab-content">
+        <div class="card">
+          <h3 style="margin-bottom: 16px; color: #2c3e50;">樹木情報を追加</h3>
+          <div class="input-group">
+            <label>樹種名 *</label>
+            <input type="text" id="treeName" placeholder="例: クロマツ、スギ">
+          </div>
+          <div class="input-group">
+            <label>特徴・詳細</label>
+            <textarea id="treeDetails" placeholder="常緑樹、針状葉、樹皮は黒色...&#10;複数行で詳しく説明できます"></textarea>
+          </div>
+          <div class="input-group">
+            <label>画像URL（任意）</label>
+            <input type="text" id="treeImage" placeholder="https://example.com/image.jpg">
+          </div>
+          <button class="button button-primary" onclick="addTree()">樹種を追加</button>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom: 16px; color: #2c3e50;">判定ルールを設定</h3>
+          <div class="input-group">
+            <label>質問 *</label>
+            <input type="text" id="questionText" placeholder="例: 常緑樹ですか？">
+          </div>
+          <div class="input-group">
+            <label>選択肢（カンマ区切り） *</label>
+            <input type="text" id="questionOptions" placeholder="例: はい,いいえ">
+          </div>
+          <button class="button button-primary" onclick="addQuestion()">質問を追加</button>
+        </div>
+
+        <h3 style="color: #2c3e50; margin-top: 24px; margin-bottom: 12px;">登録済み樹木一覧</h3>
+        <div id="treeList"></div>
+      </div>
+
+      <!-- 図書タブ -->
+      <div id="library-tab" class="tab-content">
+        <div id="libraryContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ストレージキー
+    const STORAGE_KEY = 'treeAppData_v1';
+    
+    // デフォルトデータ（初期値）
+    const DEFAULT_DATA = {
+      trees: [
+        { 
+          id: 1, 
+          name: 'クロマツ', 
+          details: '常緑樹。葉は針状で対生。樹皮は黒く厚い割り目がある。海岸近くの防風林に多い。材質は強い。', 
+          evergreen: true, 
+          leafType: 'needle',
+          image: null 
+        },
+        { 
+          id: 2, 
+          name: 'スギ', 
+          details: '常緑樹。葉は針状で互生。樹皮は繊維質で赤褐色。日本の植林樹として最も多い。', 
+          evergreen: true, 
+          leafType: 'needle',
+          image: null 
+        },
+        { 
+          id: 3, 
+          name: 'コナラ', 
+          details: '落葉樹。広葉樹。葉は楕円形で波状縁。樹皮は灰色。秋に紅葉。コナラの樹液はクワガタの食樹。', 
+          evergreen: false, 
+          leafType: 'broad',
+          image: null 
+        },
+        { 
+          id: 4, 
+          name: 'イチョウ', 
+          details: '落葉樹。独特の扇形の葉。秋に黄色く紅葉。雌木は臭い実をつける。樹齢が長い。', 
+          evergreen: false, 
+          leafType: 'broad',
+          image: null 
+        },
+        { 
+          id: 5, 
+          name: 'サクラ', 
+          details: '落葉樹。広葉樹。春に美しい花が咲く。葉は卵形。秋に紅葉。材は優しい。', 
+          evergreen: false, 
+          leafType: 'broad',
+          image: null 
+        }
+      ],
+      questions: [
+        { 
+          id: 1, 
+          text: '常緑樹ですか（1年中緑）、それとも落葉樹ですか（冬に葉が落ちる）？', 
+          options: ['常緑樹', '落葉樹'], 
+          attribute: 'evergreen', 
+          values: [true, false] 
+        },
+        { 
+          id: 2, 
+          text: '葉の形はどれですか？', 
+          options: ['針状（細長い）', '広葉（幅広い）'], 
+          attribute: 'leafType', 
+          values: ['needle', 'broad'] 
+        }
+      ]
+    };
+
+    // アプリケーション状態
+    let appData = null;
+    let currentQuestion = 0;
+    let currentAnswers = {};
+    let editingTreeId = null;
+
+    // 初期化
+    function init() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      appData = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+      resetJudge();
+      renderJudgeTab();
+    }
+
+    // タブ切り替え
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+      document.getElementById(tab + '-tab').classList.add('active');
+      event.target.classList.add('active');
+
+      if (tab === 'manage') renderManageTab();
+      if (tab === 'library') renderLibraryTab();
+      if (tab === 'judge') renderJudgeTab();
+    }
+
+    // データ保存
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    }
+
+    // 判定タブをレンダリング
+    function renderJudgeTab() {
+      const content = document.getElementById('judge-content');
+      
+      if (appData.questions.length === 0) {
+        content.innerHTML = '<div class="empty-state">「管理」タブから質問を追加してください。</div>';
+        return;
+      }
+
+      if (currentQuestion >= appData.questions.length) {
+        // 結果表示
+        const candidates = filterTreesByCriteria();
+        let html = '<div class="breadcrumb">判定完了</div>';
+
+        if (candidates.length === 0) {
+          html += '<div class="empty-state">条件に合う樹種が見つかりませんでした。別の選択肢を試してください。</div>';
+        } else {
+          candidates.forEach(tree => {
+            html += `<div class="result-card">
+              <div class="result-name">${escapeHtml(tree.name)}</div>
+              <div class="result-details">${escapeHtml(tree.details)}</div>
+              ${tree.image ? `<img src="${escapeHtml(tree.image)}" class="tree-image" alt="${escapeHtml(tree.name)}">` : ''}
+            </div>`;
+          });
+        }
+
+        html += '<div class="nav-buttons"><button class="button button-primary" onclick="resetJudge()">最初に戻る</button></div>';
+        content.innerHTML = html;
+        return;
+      }
+
+      // 質問表示
+      const question = appData.questions[currentQuestion];
+      let html = `<div class="breadcrumb">質問 ${currentQuestion + 1}/${appData.questions.length}</div>`;
+      html += `<div class="question-card">
+        <div class="question-text">${escapeHtml(question.text)}</div>
+        <div class="options">`;
+
+      question.options.forEach((opt, idx) => {
+        const selected = currentAnswers[question.id] === idx;
+        html += `<button class="option-button ${selected ? 'selected' : ''}" onclick="answerQuestion(${question.id}, ${idx})">${escapeHtml(opt)}</button>`;
+      });
+
+      html += '</div></div>';
+
+      html += '<div class="nav-buttons">';
+      if (currentQuestion > 0) {
+        html += '<button class="button button-secondary" onclick="previousQuestion()">前へ</button>';
+      }
+      html += `<button class="button button-primary" onclick="nextQuestion()">次へ</button>`;
+      html += '</div>';
+
+      content.innerHTML = html;
+    }
+
+    // 回答を記録
+    function answerQuestion(qId, optionIdx) {
+      currentAnswers[qId] = optionIdx;
+      renderJudgeTab();
+    }
+
+    // 次の質問へ
+    function nextQuestion() {
+      const q = appData.questions[currentQuestion];
+      if (currentAnswers[q.id] === undefined) {
+        alert('この質問に答えてください');
+        return;
+      }
+      currentQuestion++;
+      renderJudgeTab();
+    }
+
+    // 前の質問へ
+    function previousQuestion() {
+      if (currentQuestion > 0) currentQuestion--;
+      renderJudgeTab();
+    }
+
+    // 判定をリセット
+    function resetJudge() {
+      currentQuestion = 0;
+      currentAnswers = {};
+      renderJudgeTab();
+    }
+
+    // 基準に基づいて樹木をフィルタリング
+    function filterTreesByCriteria() {
+      return appData.trees.filter(tree => {
+        return Object.keys(currentAnswers).every(qId => {
+          const q = appData.questions.find(x => x.id == qId);
+          if (!q) return true;
+          const answerIdx = currentAnswers[qId];
+          const value = q.values[answerIdx];
+          return tree[q.attribute] === value;
+        });
+      });
+    }
+
+    // 樹木を追加
+    function addTree() {
+      const name = document.getElementById('treeName').value.trim();
+      const details = document.getElementById('treeDetails').value.trim();
+      const image = document.getElementById('treeImage').value.trim();
+
+      if (!name) {
+        alert('樹種名を入力してください');
+        return;
+      }
+
+      const newTree = {
+        id: editingTreeId || Math.max(...appData.trees.map(t => t.id), 0) + 1,
+        name,
+        details: details || '（詳細なし）',
+        evergreen: true,
+        leafType: 'broad',
+        image: image || null
+      };
+
+      if (editingTreeId) {
+        appData.trees = appData.trees.map(t => t.id === editingTreeId ? newTree : t);
+        editingTreeId = null;
+      } else {
+        appData.trees.push(newTree);
+      }
+
+      saveData();
+      document.getElementById('treeName').value = '';
+      document.getElementById('treeDetails').value = '';
+      document.getElementById('treeImage').value = '';
+      renderManageTab();
+    }
+
+    // 質問を追加
+    function addQuestion() {
+      const text = document.getElementById('questionText').value.trim();
+      const optsStr = document.getElementById('questionOptions').value.trim();
+      const opts = optsStr.split(',').map(s => s.trim()).filter(s => s);
+
+      if (!text || opts.length < 2) {
+        alert('質問と2つ以上の選択肢を入力してください');
+        return;
+      }
+
+      const newQuestion = {
+        id: Math.max(...appData.questions.map(q => q.id), 0) + 1,
+        text,
+        options: opts,
+        attribute: '',
+        values: []
+      };
+
+      appData.questions.push(newQuestion);
+      saveData();
+      document.getElementById('questionText').value = '';
+      document.getElementById('questionOptions').value = '';
+      resetJudge();
+      renderManageTab();
+    }
+
+    // 樹木を削除
+    function deleteTree(id) {
+      if (confirm('この樹種を削除しますか？')) {
+        appData.trees = appData.trees.filter(t => t.id !== id);
+        saveData();
+        renderManageTab();
+      }
+    }
+
+    // 樹木を編集
+    function editTree(id) {
+      const tree = appData.trees.find(t => t.id === id);
+      if (tree) {
+        document.getElementById('treeName').value = tree.name;
+        document.getElementById('treeDetails').value = tree.details;
+        document.getElementById('treeImage').value = tree.image || '';
+        editingTreeId = id;
+        document.getElementById('treeName').focus();
+        window.scrollTo(0, 0);
+      }
+    }
+
+    // 質問を削除
+    function deleteQuestion(id) {
+      if (confirm('この質問を削除しますか？')) {
+        appData.questions = appData.questions.filter(q => q.id !== id);
+        currentAnswers = {};
+        currentQuestion = 0;
+        saveData();
+        renderManageTab();
+        resetJudge();
+      }
+    }
+
+    // 管理タブをレンダリング
+    function renderManageTab() {
+      const treeList = document.getElementById('treeList');
+      
+      if (appData.trees.length === 0) {
+        treeList.innerHTML = '<div class="empty-state">樹木がまだ登録されていません</div>';
+      } else {
+        let html = '';
+        appData.trees.forEach(tree => {
+          html += `<div class="tree-list-item">
+            <div>
+              <div class="tree-list-item-name">${escapeHtml(tree.name)}</div>
+              <div class="tree-list-item-details">${escapeHtml(tree.details.substring(0, 50))}...</div>
+            </div>
+            <div class="tree-actions">
+              <button class="edit" onclick="editTree(${tree.id})">編集</button>
+              <button class="delete" onclick="deleteTree(${tree.id})">削除</button>
+            </div>
+          </div>`;
+        });
+        treeList.innerHTML = html;
+      }
+
+      // 質問リスト
+      const questionsList = document.getElementById('manage-tab').querySelector('#questionsList') || document.createElement('div');
+      let questionHtml = '<h3 style="color: #2c3e50; margin-top: 24px; margin-bottom: 12px;">登録済み質問一覧</h3>';
+      
+      if (appData.questions.length === 0) {
+        questionHtml += '<div class="empty-state">質問がまだ登録されていません</div>';
+      } else {
+        appData.questions.forEach(q => {
+          questionHtml += `<div class="tree-list-item">
+            <div>
+              <div class="tree-list-item-name">${escapeHtml(q.text)}</div>
+              <div class="tree-list-item-details">${escapeHtml(q.options.join(' / '))}</div>
+            </div>
+            <div class="tree-actions">
+              <button class="delete" onclick="deleteQuestion(${q.id})">削除</button>
+            </div>
+          </div>`;
+        });
+      }
+
+      if (!document.getElementById('questionsList')) {
+        const div = document.createElement('div');
+        div.id = 'questionsList';
+        div.innerHTML = questionHtml;
+        treeList.parentNode.insertBefore(div, treeList.nextSibling);
+      } else {
+        document.getElementById('questionsList').innerHTML = questionHtml;
+      }
+    }
+
+    // 図書タブをレンダリング
+    function renderLibraryTab() {
+      const content = document.getElementById('libraryContent');
+      
+      if (appData.trees.length === 0) {
+        content.innerHTML = '<div class="empty-state">樹木がまだ登録されていません</div>';
+        return;
+      }
+
+      let html = '';
+      appData.trees.forEach(tree => {
+        html += `<div class="card">
+          <h3 style="color: #2ecc71; margin-bottom: 8px;">${escapeHtml(tree.name)}</h3>
+          <p style="font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 10px;">${escapeHtml(tree.details)}</p>
+          ${tree.image ? `<img src="${escapeHtml(tree.image)}" class="tree-image" alt="${escapeHtml(tree.name)}">` : ''}
+        </div>`;
+      });
+
+      content.innerHTML = html;
+    }
+
+    // XSS対策
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 初期化実行
+    init();
+  </script>
+</body>
+</html>
